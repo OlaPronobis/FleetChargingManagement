@@ -8,6 +8,8 @@ import pandas as pd
 
 p = {}
 sumcharging = {}
+
+
 class Optimierung():
     def ladeplan(self, lenID):
         # Lesen der Daten
@@ -29,15 +31,18 @@ class Optimierung():
         i = 0
         z = 0
         Z = 0
-        with open("./prognose/Prognose_final.csv") as f:  # datei hat prognose aus level 2 und 3 als alle
+        # datei hat prognose aus level 2 und 3 als alle
+        with open("./prognose/Prognose_final.csv") as f:
             reader = csv.reader(f, delimiter=',')
             for row in reader:
                 Z = Z + 1
                 if z != 0:
-                    for j in range(0, 8 + 2 * (lenID - 1)):  # lenID = number of evs? -> 8 für timeindex,
+                    # lenID = number of evs? -> 8 für timeindex,
+                    for j in range(0, 8 + 2 * (lenID - 1)):
                         # grid, pvpower, gl, sp, co2, chargingev1, soctocharge ev1
                         if row[j] == "":  # todo evtl hier ändern
-                            p[i, j + 1] = 0  # p liste deren werte um 1 reihe noch unten verschoben sit
+                            # p liste deren werte um 1 reihe noch unten verschoben sit
+                            p[i, j + 1] = 0
                         else:
                             p[i, j + 1] = float(row[j])
                             # var_test = float(row[j])
@@ -63,8 +68,10 @@ class Optimierung():
         # S: Standzeit, E: zu ladene SOC
         for i in range(Z):
             for j in range(1, lenID + 1):
-                exec('x{}[i] = model.addVar(vtype="C", name="x{}(%s)" % (i))'.format(j, j))
-                exec('a{}[i] = model.addVar(vtype="b", name="a{}(%s)" % (i))'.format(j, j))
+                exec(
+                    'x{}[i] = model.addVar(vtype="C", name="x{}(%s)" % (i))'.format(j, j))
+                exec(
+                    'a{}[i] = model.addVar(vtype="b", name="a{}(%s)" % (i))'.format(j, j))
                 # exec('pv{}[i] = model.addVar(vtype="C", name="pv{}(%s)" % (i))'.format(j, j))
                 # exec('pv_a{}[i] = model.addVar(vtype="C", name="pv_a{}(%s)" % (i))'.format(j, j))
             # x1[i] = model.addVar(vtype="C", name="x(%s)" % (i))
@@ -81,9 +88,13 @@ class Optimierung():
         for i in range(Z):
             sumcharging[i] = 0
             for j in range(1, lenID + 1):
-                exec('model.addConstr((x{}[i]) >= 4.14)'.format(j))  # min charge
-                exec('model.addConstr((x{}[i])<= P_max)'.format(j))  # max charge
-                exec('sumcharging[i] = x{}[i]*a{}[i]+sumcharging[i]'.format(j, j))  # für netzbegrenzung
+                # min charge
+                exec('model.addConstr((x{}[i]) >= 4.14)'.format(j))
+                # max charge
+                exec('model.addConstr((x{}[i]) <= P_max)'.format(j))
+                # für netzbegrenzung
+                exec(
+                    'sumcharging[i] = x{}[i]*a{}[i]+sumcharging[i]'.format(j, j))
                 # exec('model.addConstr((pv_a{}[i]) == (x{}[i]*a{}[i]))'.format(j, j, j))
                 # exec('model.addConstr((pv{}[i]) == min_(pv_a{}[i], p[i,3]))'.format(j,j,j))
 
@@ -167,11 +178,11 @@ class Optimierung():
         # model.addConstr(quicksum((1/4)*x[i]*a[i] for i in S[k]) >= E[k]*50)
 
         # For-Schleife fuer jedes Fzg erstellen
-        ## x & a Entscheidungsvariabeln
-        ## 50 Akkukapazitaet, als Variabel fuer andere EV anpassen
-        ## nicht einfacher formulieren
+        # x & a Entscheidungsvariabeln
+        # 50 Akkukapazitaet, als Variabel fuer andere EV anpassen
+        # nicht einfacher formulieren
 
-        ## Nebenbedingung Netzanschluss nicht einfach gleich 20
+        # Nebenbedingung Netzanschluss nicht einfach gleich 20
         # 20: grid - building + pv
         # andere Nebenbedingungen einfuegen
 
@@ -197,7 +208,8 @@ class Optimierung():
         # new ZF
         for j in range(1, lenID + 1):
             globals()['sumprice' + str(j)] = quicksum(
-                globals()['x' + str(j)][i] * globals()['a' + str(j)][i] * (p[i, 6] * C_Emission + C_Cost * p[i, 5])
+                globals()['x' + str(j)][i] * globals()['a' + str(j)
+                                                       ][i] * (p[i, 6] * C_Emission + C_Cost * p[i, 5])
                 for i in range(Z))
             # globals()['sumprice'+str(j)] = quicksum(globals()['x'+str(j)][i]*globals()['a'+str(j)][i]*(p[i,6]*C_Emission+
             #         C_Cost*p[i,5])-globals()['pv'+str(j)][i]*(p[i,6]*C_Emission+
@@ -276,8 +288,8 @@ class Optimierung():
             # Ladeplan1={}
         # Ladeplan2={}
         Time = {}
-#######----------------------------------------------------------------------
-######## Hier Anzahl EV Anpassen
+# ----------------------------------------------------------------------
+# Hier Anzahl EV Anpassen
         for i in range(Z):
             Ladeplan1[i] = x1[i].X * a1[i].X
             Ladeplan2[i] = x2[i].X * a2[i].X
@@ -312,12 +324,12 @@ class Optimierung():
         Ladeleistung4 = x4[0].X * a4[0].X
         Ladeleistung5 = x5[0].X * a5[0].X
         Ladeleistung6 = x6[0].X * a6[0].X
-        Ladeleistung7=x7[0].X*a7[0].X
-        Ladeleistung8=x8[0].X*a8[0].X
-        Ladeleistung9=x9[0].X*a9[0].X
-        Ladeleistung10=x10[0].X*a10[0].X
-        Ladeleistung11=x11[0].X*a11[0].X
-        Ladeleistung12=x12[0].X*a12[0].X
+        Ladeleistung7 = x7[0].X*a7[0].X
+        Ladeleistung8 = x8[0].X*a8[0].X
+        Ladeleistung9 = x9[0].X*a9[0].X
+        Ladeleistung10 = x10[0].X*a10[0].X
+        Ladeleistung11 = x11[0].X*a11[0].X
+        Ladeleistung12 = x12[0].X*a12[0].X
         # Ladeleistung13=x13[0].X*a13[0].X
         # Ladeleistung14=x14[0].X*a14[0].X
         # Ladeleistung15=x15[0].X*a15[0].X
@@ -334,11 +346,10 @@ class Optimierung():
         # Kosten=float(model.ObjVal)
         Kosten = 0
 
-        Ladeplan_gesamt = pd.DataFrame(data=[Ladeplan1, Ladeplan2, Ladeplan3, Ladeplan4, Ladeplan5, Ladeplan6
-                                             ,Ladeplan7, Ladeplan8, Ladeplan9, Ladeplan10, Ladeplan11, Ladeplan12
+        Ladeplan_gesamt = pd.DataFrame(data=[Ladeplan1, Ladeplan2, Ladeplan3, Ladeplan4, Ladeplan5, Ladeplan6, Ladeplan7, Ladeplan8, Ladeplan9, Ladeplan10, Ladeplan11, Ladeplan12
                                              # ,Ladeplan13, Ladeplan14, Ladeplan15, Ladeplan16, Ladeplan17, Ladeplan18,
                                              # Ladeplan19, Ladeplan20, Ladeplan21, Ladeplan22, Ladeplan23, Ladeplan24
-                                       ]).T
+                                             ]).T
 
         for i in range(Z):
             Kosten = Kosten + x1[i].X * a1[i].X * p[i, 5]
@@ -360,17 +371,16 @@ class Optimierung():
             # Create a writer object from csv module
             csv_writer = csv.writer(write_obj)
             # Add contents of list as last row in the csv file
-            list_of_elem = [p[0, 1], objval, p[0, 5], p[0, 6], Ladeleistung1, Ladeleistung2, Ladeleistung3, Ladeleistung4, Ladeleistung5, Ladeleistung6
-                            ,Ladeleistung7, Ladeleistung8, Ladeleistung9, Ladeleistung10, Ladeleistung11, Ladeleistung12
+            list_of_elem = [p[0, 1], objval, p[0, 5], p[0, 6], Ladeleistung1, Ladeleistung2, Ladeleistung3, Ladeleistung4, Ladeleistung5, Ladeleistung6, Ladeleistung7, Ladeleistung8, Ladeleistung9, Ladeleistung10, Ladeleistung11, Ladeleistung12
                             # ,Ladeleistung13,Ladeleistung14,Ladeleistung15,Ladeleistung16,Ladeleistung17,Ladeleistung18,
                             # Ladeleistung19,Ladeleistung20,Ladeleistung21,Ladeleistung22,Ladeleistung23,Ladeleistung24
                             ]
             csv_writer.writerow(list_of_elem)
         return (Ladeleistung1, Ladeleistung2, Ladeleistung3, Ladeleistung4, Ladeleistung5, Ladeleistung6,
-                Ladeleistung7,Ladeleistung8,Ladeleistung9,Ladeleistung10,Ladeleistung11,Ladeleistung12,
+                Ladeleistung7, Ladeleistung8, Ladeleistung9, Ladeleistung10, Ladeleistung11, Ladeleistung12,
                 # Ladeleistung13,Ladeleistung14,Ladeleistung15,Ladeleistung16,Ladeleistung17,Ladeleistung18,
                 # Ladeleistung19,Ladeleistung20,Ladeleistung21,Ladeleistung22,Ladeleistung23,Ladeleistung24,
-                  Ladeplan_gesamt)
+                Ladeplan_gesamt)
 
     # 1. in main zählen wie viele wirklich laden (soc <100 ? wie viele sind da)
     # daraus ladeleistung
@@ -384,9 +394,11 @@ class Optimierung():
                 ladeleistung = SimConfig.P_max
             while ladeleistung < 4.14:
                 if number_of_charging_evs < 1:
-                    print('FEHLER: zu wenig verfügbare Leistung um ein Fahrzeug bei minimaler Ladeleistung zu laden')
+                    print(
+                        'FEHLER: zu wenig verfügbare Leistung um ein Fahrzeug bei minimaler Ladeleistung zu laden')
                     break
-                print('WARNUNG: ein Fahrzeug kann nicht mit der min. Ladeleistung geladen werden')
+                print(
+                    'WARNUNG: ein Fahrzeug kann nicht mit der min. Ladeleistung geladen werden')
                 number_of_charging_evs -= 1
                 ladeleistung = load_limit / number_of_charging_evs
         else:
@@ -394,7 +406,8 @@ class Optimierung():
         return ladeleistung
 
     def fcfs(self, load_limit, list_of_evs_with_prio):
-        priority_list_sorted = sorted(list_of_evs_with_prio, key=lambda ev: ev[1], reverse=True)
+        priority_list_sorted = sorted(
+            list_of_evs_with_prio, key=lambda ev: ev[1], reverse=True)
         load_limit = load_limit
         total_nmb_of_evs = SimConfig.Number_ESD
         ladeleistungen_list = [0] * total_nmb_of_evs
